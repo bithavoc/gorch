@@ -15,6 +15,10 @@ func NewAmqpcClusterConfig(url string) gorch.Config {
 }
 
 func (config amqpcConfig) Connect() (gorch.Cluster, error) {
+	return config.connect()
+}
+
+func (config amqpcConfig) connect() (*amqpcCluster, error) {
 	cluster, err := newAmqpcCluster(config)
 	if err != nil {
 		return nil, err
@@ -22,6 +26,6 @@ func (config amqpcConfig) Connect() (gorch.Cluster, error) {
 	return cluster, nil
 }
 
-func (config amqpcConfig) CreateHost() gorch.Host {
-	return nil
+func (config amqpcConfig) Host() (gorch.Host, error) {
+	return newAmqpcHost(config)
 }

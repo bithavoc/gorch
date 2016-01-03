@@ -79,3 +79,8 @@ func (cluster *amqpcCluster) Include(registry *gorch.OperationsRegistry) error {
 	}
 	return nil
 }
+
+func (cluster *amqpcCluster) createChannel() (*amqp.Channel, error) {
+	channel, err := cluster.connection.Channel()
+	return channel, err
+}

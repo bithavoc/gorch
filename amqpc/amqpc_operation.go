@@ -20,7 +20,7 @@ func newAmqpcOperation(cluster *amqpcCluster, entry *gorch.OperationEntry) *amqp
 }
 
 func (op *amqpcOperation) open() (err error) {
-	op.channel, err = op.cluster.connection.Channel()
+	op.channel, err = op.cluster.createChannel()
 	return
 }
 
@@ -71,4 +71,8 @@ func (op *amqpcOperation) ensureTopology() error {
 
 func (op *amqpcOperation) Entry() *gorch.OperationEntry {
 	return op.entry
+}
+
+func (op *amqpcOperation) Call(input interface{}) gorch.ProcedureCall {
+	return newAmqpcProcedureCall(op, input)
 }
