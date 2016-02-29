@@ -9,13 +9,14 @@ import (
 )
 
 type operationHost struct {
-	host           *amqpcHost
-	operation      *amqpcOperation
-	entry          *gorch.OperationEntry
-	shutdownSignal chan struct{}
-	requests       <-chan amqp.Delivery
-	consumerName   string
-	handler        gorch.OperationHandler
+	host              *amqpcHost
+	operation         *amqpcOperation
+	entry             *gorch.OperationEntry
+	shutdownSignal    chan struct{}
+	requests          <-chan amqp.Delivery
+	consumerName      string
+	handler           gorch.OperationHandler
+	operationShutdown chan<- *operationHost
 }
 
 func newOperationHost(host *amqpcHost, entry *gorch.OperationEntry) *operationHost {
@@ -27,7 +28,8 @@ func newOperationHost(host *amqpcHost, entry *gorch.OperationEntry) *operationHo
 	}
 }
 
-func (oph *operationHost) start() error {
+func (oph *operationHost) start(shutdown chan<- *operationHost) error {
+	oph.operationShutdown = shutdown
 	op, err := oph.host.cluster.operation(oph.entry.Name())
 	if err != nil {
 		return err
@@ -45,7 +47,6 @@ func (oph *operationHost) start() error {
 	}
 	oph.requests = requests
 	go oph.loop()
-	return nil
 	return nil
 }
 
@@ -95,8 +96,12 @@ func (oph *operationHost) loop() {
 	func() {
 		for {
 			select {
-			case request := <-oph.requests:
+			case request, ok := <-oph.requests:
 				{
+					if !ok {
+						log.Printf("operation request transport has been closed")
+						return
+					}
 					oph.processRequest(request)
 				}
 			case <-oph.shutdownSignal:
@@ -107,6 +112,8 @@ func (oph *operationHost) loop() {
 			}
 		}
 	}()
+	log.Printf("Operation loop ended")
+	oph.operationShutdown <- oph
 }
 
 func (oph *operationHost) shutdown() {

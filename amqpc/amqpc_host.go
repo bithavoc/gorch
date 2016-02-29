@@ -8,11 +8,12 @@ import (
 )
 
 type amqpcHost struct {
-	config         amqpcConfig
-	cluster        *amqpcCluster
-	shutdown       chan struct{}
-	serving        bool
-	operationHosts map[string]*operationHost
+	config            amqpcConfig
+	cluster           *amqpcCluster
+	shutdown          chan struct{}
+	serving           bool
+	operationHosts    map[string]*operationHost
+	operationShutdown chan *operationHost
 }
 
 func newAmqpcHost(config amqpcConfig) (*amqpcHost, error) {
@@ -21,10 +22,11 @@ func newAmqpcHost(config amqpcConfig) (*amqpcHost, error) {
 		return nil, err
 	}
 	host := &amqpcHost{
-		config:         config,
-		cluster:        cluster,
-		shutdown:       make(chan struct{}, 2),
-		operationHosts: make(map[string]*operationHost),
+		config:            config,
+		cluster:           cluster,
+		shutdown:          make(chan struct{}, 2),
+		operationHosts:    make(map[string]*operationHost),
+		operationShutdown: make(chan *operationHost, 100),
 	}
 	return host, nil
 }
@@ -68,12 +70,17 @@ func (host *amqpcHost) Serve() error {
 		}
 		oph := newOperationHost(host, entry)
 		defer oph.shutdown()
-		if err := oph.start(); err != nil {
+		if err := oph.start(host.operationShutdown); err != nil {
 			return err
 		}
 		host.add(oph)
 	}
-	<-host.shutdown
+	select {
+	case <-host.shutdown:
+		return nil
+	case <-host.operationShutdown:
+		return nil
+	}
 	return nil
 }
 
