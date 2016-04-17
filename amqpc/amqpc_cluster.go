@@ -25,8 +25,21 @@ func newAmqpcCluster(config amqpcConfig) (*amqpcCluster, error) {
 }
 
 func (cluster *amqpcCluster) open() error {
+	if cluster.config.tlsConfig != nil {
+		return cluster.dialTLS()
+	}
+	return cluster.dial()
+}
+
+func (cluster *amqpcCluster) dial() error {
 	var err error
 	cluster.connection, err = amqp.Dial(cluster.config.url)
+	return err
+}
+
+func (cluster *amqpcCluster) dialTLS() error {
+	var err error
+	cluster.connection, err = amqp.DialTLS(cluster.config.url, cluster.config.tlsConfig)
 	return err
 }
 

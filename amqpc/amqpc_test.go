@@ -8,7 +8,7 @@ import (
 
 func TestAmqp(t *testing.T) {
 	const opName = "clusterTopologyTestOperation"
-	config := NewAmqpcClusterConfig(amqpcServerTestingURL)
+	config := NewAmqpcClusterConfig(amqpcServerTestingURL, nil)
 	cluster, err := config.Connect()
 	if err != nil {
 		t.Fatalf("Amqpc cluster connection error: %s", err.Error())

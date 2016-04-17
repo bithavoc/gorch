@@ -1,16 +1,19 @@
 package amqpc
 
 import (
+	"crypto/tls"
 	"github.com/bithavoc/gorch"
 )
 
 type amqpcConfig struct {
-	url string
+	url       string
+	tlsConfig *tls.Config
 }
 
-func NewAmqpcClusterConfig(url string) gorch.Config {
+func NewAmqpcClusterConfig(url string, tlsConfig *tls.Config) gorch.Config {
 	return amqpcConfig{
-		url: url,
+		url:       url,
+		tlsConfig: tlsConfig,
 	}
 }
 
