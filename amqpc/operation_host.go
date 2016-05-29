@@ -1,9 +1,9 @@
 package amqpc
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"github.com/bithavoc/gorch"
+	"github.com/pborman/uuid"
 	"github.com/streadway/amqp"
 	"log"
 )
